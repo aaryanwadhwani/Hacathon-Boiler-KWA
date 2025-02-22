@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ATS Resume Reviewer</title>
+</head>
+<body>
+    <h1>ATS Resume Reviewer</h1>
+
+    <textarea id="resumeText" placeholder="Paste your resume text here"></textarea><br><br>
+    <textarea id="jobDescription" placeholder="Paste the job description here"></textarea><br><br>
+
+    <button onclick="analyzeResume()">Analyze Resume</button>
+
+    <div id="results">
+      <h2>Results:</h2>
+      <p>ATS Score: <span id="atsScore"></span></p>
+      <p>Rewritten Resume Section: <pre id="rewrittenResume"></pre></p>
+    </div>
+
+    <script>
+        async function analyzeResume() {
+            const resumeText = document.getElementById('resumeText').value;
+            const jobDescription = document.getElementById('jobDescription').value;
+
+            const response = await fetch('http://localhost:3001/analyze', {  // Point to your backend
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ resumeText, jobDescription })
+            });
+
+            const data = await response.json();
+
+            document.getElementById('atsScore').textContent = data.atsScore || "N/A";
+            document.getElementById('rewrittenResume').textContent = data.rewrittenResume || "N/A";
+        }
+    </script>
+</body>
+</html>
