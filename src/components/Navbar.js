@@ -68,9 +68,62 @@
 // }
 
 // export default Navbar;
+// import React from 'react';
+// import { Link } from 'react-router-dom';
+// import { Home, Upload, Search } from 'lucide-react';
+// import { useAuth0 } from '@auth0/auth0-react';
+
+// function Navbar() {
+//   const { isAuthenticated, logout } = useAuth0();
+
+//   return (
+//     <nav className="p-4 shadow-md" style={{ backgroundColor: '#ddb945' }}>
+//       <div className="container mx-auto flex items-center justify-between">
+//         {/* Logo / Title */}
+//         <Link to="/" className="flex items-center text-xl font-bold" style={{ color: '#000000' }}>
+//           <Home className="mr-2" size={24} />
+//           ATS Resume Reviewer
+//         </Link>
+
+//         {/* Nav Links */}
+//         <div className="flex items-center space-x-6">
+//           <Link
+//             to="/resume-analysis"
+//             className="flex items-center font-semibold transition-colors"
+//             style={{ color: '#000000' }}
+//           >
+//             <Upload className="mr-1" size={20} />
+//             ATS Scanner
+//           </Link>
+//           <Link
+//             to="/job-matching"
+//             className="flex items-center font-semibold transition-colors"
+//             style={{ color: '#000000' }}
+//           >
+//             <Search className="mr-1" size={20} />
+//             Job Matching
+//           </Link>
+
+//           {isAuthenticated && (
+//             <button
+//               onClick={() => logout({ returnTo: window.location.origin + '/login' })}
+//               className="font-bold transition-colors"
+//               style={{ color: '#000000' }}
+//             >
+//               Logout
+//             </button>
+//           )}
+//         </div>
+//       </div>
+//     </nav>
+//   );
+// }
+
+// export default Navbar;
+
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Home, Upload, Search } from 'lucide-react';
+import { Home, Upload, BarChart2 } from 'lucide-react';
 import { useAuth0 } from '@auth0/auth0-react';
 
 function Navbar() {
@@ -95,23 +148,24 @@ function Navbar() {
             <Upload className="mr-1" size={20} />
             ATS Scanner
           </Link>
-          <Link
-            to="/job-matching"
-            className="flex items-center font-semibold transition-colors"
-            style={{ color: '#000000' }}
-          >
-            <Search className="mr-1" size={20} />
-            Job Matching
-          </Link>
-
           {isAuthenticated && (
-            <button
-              onClick={() => logout({ returnTo: window.location.origin + '/login' })}
-              className="font-bold transition-colors"
-              style={{ color: '#000000' }}
-            >
-              Logout
-            </button>
+            <>
+              <Link
+                to="/dashboard"
+                className="flex items-center font-semibold transition-colors"
+                style={{ color: '#000000' }}
+              >
+                <BarChart2 className="mr-1" size={20} />
+                Dashboard
+              </Link>
+              <button
+                onClick={() => logout({ returnTo: window.location.origin + '/login' })}
+                className="font-bold transition-colors"
+                style={{ color: '#000000' }}
+              >
+                Logout
+              </button>
+            </>
           )}
         </div>
       </div>
