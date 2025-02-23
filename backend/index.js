@@ -216,6 +216,7 @@ mongoose.connect(process.env.MONGO_URI)
 
 // Define a schema and model for storing resume analysis results
 const AnalysisSchema = new mongoose.Schema({
+  userId: { type: String, required: true }, // User ID from Auth0 (e.g., user.sub)
   resumeText: { type: String, required: true },
   jobDescription: { type: String, required: true },
   atsScore: { type: Number },
@@ -225,6 +226,7 @@ const AnalysisSchema = new mongoose.Schema({
 });
 
 const Analysis = mongoose.model('Analysis', AnalysisSchema);
+
 
 // Helper function: Attempt to extract JSON substring from a string
 function extractJSON(str) {
@@ -242,18 +244,98 @@ function extractJSON(str) {
 }
 
 // POST /chat endpoint: process resume file and job description, call ChatGPT API, and store analysis in MongoDB
+// app.post('/chat', upload.single('resumeFile'), async (req, res) => {
+//   try {
+//     const jobDescription = req.body.jobDescription;
+//     const resumeFile = req.file;
+
+//     if (!resumeFile || !jobDescription) {
+//       return res.status(400).json({ error: "Resume file and job description are required." });
+//     }
+
+//     let resumeText = '';
+
+//     // If the file is a PDF, parse its text; otherwise, treat as UTF-8 text.
+//     if (resumeFile.mimetype === 'application/pdf') {
+//       const pdfData = await pdfParse(resumeFile.buffer);
+//       resumeText = pdfData.text;
+//     } else {
+//       resumeText = resumeFile.buffer.toString('utf-8');
+//     }
+
+//     // Build a prompt using the resume text and job description.
+//     const prompt = `Please analyze the following resume for ATS compatibility in the context of the provided job description.
+    
+// Resume:
+// ${resumeText}
+    
+// Job Description:
+// ${jobDescription}
+    
+// Return the analysis as a JSON object with the following keys:
+// - atsScore: ATS compatibility score (0-100)
+// - missingKeywords: an array of keywords missing from the resume that are important for the job
+// - suggestions: textual suggestions for improvement.`;
+
+//     // Call the ChatGPT API (using your chosen model, e.g. "gpt-4o-mini" or "gpt-4")
+//     const response = await axios.post(
+//       "https://api.openai.com/v1/chat/completions",
+//       {
+//         model: "gpt-4o-mini",
+//         messages: [{ role: "user", content: prompt }],
+//         temperature: 0.7,
+//       },
+//       {
+//         headers: {
+//           "Content-Type": "application/json",
+//           "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+//         },
+//       }
+//     );
+
+//     const rawResult = response.data.choices[0].message.content;
+//     let parsedResult;
+//     try {
+//       parsedResult = JSON.parse(rawResult);
+//     } catch (error) {
+//       parsedResult = extractJSON(rawResult);
+//       if (!parsedResult) {
+//         parsedResult = { atsScore: null, missingKeywords: [], suggestions: rawResult };
+//       }
+//     }
+
+//     // Save the analysis (along with the resume text and job description) into MongoDB
+//     const analysisDoc = new Analysis({
+//       resumeText,
+//       jobDescription,
+//       atsScore: parsedResult.atsScore,
+//       missingKeywords: parsedResult.missingKeywords,
+//       suggestions: parsedResult.suggestions,
+//     });
+//     await analysisDoc.save();
+
+//     // Return the analysis result to the frontend
+//     res.json({ response: parsedResult });
+//   } catch (error) {
+//     console.error(
+//       "Error querying ChatGPT:",
+//       error.response ? error.response.data : error.message
+//     );
+//     res.status(500).json({ error: error.message });
+//   }
+// });
+
 app.post('/chat', upload.single('resumeFile'), async (req, res) => {
   try {
     const jobDescription = req.body.jobDescription;
+    const userId = req.body.userId; // Get the user ID from the request
     const resumeFile = req.file;
 
-    if (!resumeFile || !jobDescription) {
-      return res.status(400).json({ error: "Resume file and job description are required." });
+    if (!resumeFile || !jobDescription || !userId) {
+      return res.status(400).json({ error: "Resume file, job description, and userId are required." });
     }
 
     let resumeText = '';
-
-    // If the file is a PDF, parse its text; otherwise, treat as UTF-8 text.
     if (resumeFile.mimetype === 'application/pdf') {
       const pdfData = await pdfParse(resumeFile.buffer);
       resumeText = pdfData.text;
@@ -261,7 +343,6 @@ app.post('/chat', upload.single('resumeFile'), async (req, res) => {
       resumeText = resumeFile.buffer.toString('utf-8');
     }
 
-    // Build a prompt using the resume text and job description.
     const prompt = `Please analyze the following resume for ATS compatibility in the context of the provided job description.
     
 Resume:
@@ -275,11 +356,10 @@ Return the analysis as a JSON object with the following keys:
 - missingKeywords: an array of keywords missing from the resume that are important for the job
 - suggestions: textual suggestions for improvement.`;
 
-    // Call the ChatGPT API (using your chosen model, e.g. "gpt-4o-mini" or "gpt-4")
     const response = await axios.post(
       "https://api.openai.com/v1/chat/completions",
       {
-        model: "gpt-4o-mini",
+        model: "gpt-4o-mini", // or "gpt-4" if available
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
       },
@@ -302,8 +382,9 @@ Return the analysis as a JSON object with the following keys:
       }
     }
 
-    // Save the analysis (along with the resume text and job description) into MongoDB
+    // Save the analysis along with the userId
     const analysisDoc = new Analysis({
+      userId,
       resumeText,
       jobDescription,
       atsScore: parsedResult.atsScore,
@@ -312,7 +393,6 @@ Return the analysis as a JSON object with the following keys:
     });
     await analysisDoc.save();
 
-    // Return the analysis result to the frontend
     res.json({ response: parsedResult });
   } catch (error) {
     console.error(
@@ -322,6 +402,7 @@ Return the analysis as a JSON object with the following keys:
     res.status(500).json({ error: error.message });
   }
 });
+
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Backend running on http://localhost:${PORT}`));
