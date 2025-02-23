@@ -70,6 +70,7 @@ import AnalysisHistory from './components/AnalysisHistory';
 import LoginPage from './components/LoginPage';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import AboutUs from './components/AboutUs';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, isLoading } = useAuth0();
@@ -86,6 +87,7 @@ function App() {
         <main className="flex-grow">
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/about" element={<AboutUs />} />
             <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
             <Route path="/resume-analysis" element={<ProtectedRoute><ResumeAnalysisPage /></ProtectedRoute>} />
             <Route path="/job-matching" element={<ProtectedRoute><JobMatchingPage /></ProtectedRoute>} />
