@@ -194,21 +194,40 @@ const cors = require('cors');
 const axios = require('axios');
 const multer = require('multer');
 const pdfParse = require('pdf-parse');
+const mongoose = require('mongoose');
 
 const app = express();
 
-// Enable CORS for requests from http://localhost:3000
+// Enable CORS for requests from your frontend (http://localhost:3000)
 app.use(cors({
   origin: 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Configure multer to handle file uploads in memory
+// Use multer for handling multipart/form-data (file uploads)
 const upload = multer();
 
+// Connect to MongoDB with Mongoose
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('MongoDB connected'))
+  .catch((err) => console.error('MongoDB connection error:', err));
+
+
+// Define a schema and model for storing resume analysis results
+const AnalysisSchema = new mongoose.Schema({
+  resumeText: { type: String, required: true },
+  jobDescription: { type: String, required: true },
+  atsScore: { type: Number },
+  missingKeywords: { type: [String] },
+  suggestions: { type: String },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Analysis = mongoose.model('Analysis', AnalysisSchema);
+
+// Helper function: Attempt to extract JSON substring from a string
 function extractJSON(str) {
-  // Find first and last curly brace
   const firstBrace = str.indexOf('{');
   const lastBrace = str.lastIndexOf('}');
   if (firstBrace !== -1 && lastBrace !== -1) {
@@ -222,30 +241,27 @@ function extractJSON(str) {
   return null;
 }
 
-// Endpoint to handle resume analysis via ChatGPT API
+// POST /chat endpoint: process resume file and job description, call ChatGPT API, and store analysis in MongoDB
 app.post('/chat', upload.single('resumeFile'), async (req, res) => {
   try {
     const jobDescription = req.body.jobDescription;
     const resumeFile = req.file;
 
     if (!resumeFile || !jobDescription) {
-      return res
-        .status(400)
-        .json({ error: "Resume file and jobDescription are required." });
+      return res.status(400).json({ error: "Resume file and job description are required." });
     }
 
     let resumeText = '';
 
-    // If the file is a PDF, parse text with pdf-parse
+    // If the file is a PDF, parse its text; otherwise, treat as UTF-8 text.
     if (resumeFile.mimetype === 'application/pdf') {
       const pdfData = await pdfParse(resumeFile.buffer);
       resumeText = pdfData.text;
     } else {
-      // Fallback: treat file as plain text (UTF-8)
       resumeText = resumeFile.buffer.toString('utf-8');
     }
 
-    // Build the prompt
+    // Build a prompt using the resume text and job description.
     const prompt = `Please analyze the following resume for ATS compatibility in the context of the provided job description.
     
 Resume:
@@ -259,11 +275,11 @@ Return the analysis as a JSON object with the following keys:
 - missingKeywords: an array of keywords missing from the resume that are important for the job
 - suggestions: textual suggestions for improvement.`;
 
-    // Call the ChatGPT API
+    // Call the ChatGPT API (using your chosen model, e.g. "gpt-4o-mini" or "gpt-4")
     const response = await axios.post(
       "https://api.openai.com/v1/chat/completions",
       {
-        model: "gpt-4o-mini", // or "gpt-4" if you have access
+        model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
       },
@@ -278,17 +294,25 @@ Return the analysis as a JSON object with the following keys:
     const rawResult = response.data.choices[0].message.content;
     let parsedResult;
     try {
-      // Try a direct parse
       parsedResult = JSON.parse(rawResult);
     } catch (error) {
-      // If that fails, try to extract JSON substring
       parsedResult = extractJSON(rawResult);
       if (!parsedResult) {
-        // If extraction fails, return the raw result
-        parsedResult = { atsScore: 'N/A', missingKeywords: [], suggestions: rawResult };
+        parsedResult = { atsScore: null, missingKeywords: [], suggestions: rawResult };
       }
     }
 
+    // Save the analysis (along with the resume text and job description) into MongoDB
+    const analysisDoc = new Analysis({
+      resumeText,
+      jobDescription,
+      atsScore: parsedResult.atsScore,
+      missingKeywords: parsedResult.missingKeywords,
+      suggestions: parsedResult.suggestions,
+    });
+    await analysisDoc.save();
+
+    // Return the analysis result to the frontend
     res.json({ response: parsedResult });
   } catch (error) {
     console.error(
