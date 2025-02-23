@@ -30,20 +30,29 @@ Alignify is an **AI-driven resume reviewer** designed to help job seekers optimi
    cd Hacathon-Boiler-KWA
    ```
 
-2. **Install Dependencies**
+2. **Install Dependencies(in root directory)**
+   ```sh
+   npm install
+   ```
+   
+   **Install Dependencies(in backend directory)**
    ```sh
    npm install
    ```
 
-3. **Setup Environment Variables**
-   Create a .env file and add the following lines
+4. **Setup Environment Variables**
+   Create a .env file in the root directory and add the following lines
    ```
-   MONGO_URI=your-mongodb-connection-string
    AUTH0_DOMAIN=your-auth0-domain
    AUTH0_CLIENT_ID=your-auth0-client-id
    ```
+   Create a .env file in the backend directory and add the following lines
+   ```
+   MONGO_URI=your-mongodb-connection-string
+   OPENAI_API_KEY=your-openai-key
+   ```
 
-4. **Run the Program**
+5. **Run the Program**
    In two different terminals run the following commands
    ```sh
    npm --prefix backend/ start
