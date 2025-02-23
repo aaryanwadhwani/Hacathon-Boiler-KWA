@@ -64,49 +64,75 @@
 
 // export default JobMatchingPage;
 
-
 import { useState } from 'react';
 
 const JobMatchingPage = () => {
-    const [inputText, setInputText] = useState('');
-    const [response, setResponse] = useState('');
+  const [inputText, setInputText] = useState('');
+  const [response, setResponse] = useState('');
 
-    const queryLlama = async () => {
-        try {
-            const res = await fetch('http://localhost:5000/query', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ prompt: inputText })
-            });
-            const data = await res.json();
-            setResponse(data.response);
-        } catch (error) {
-            console.error("Error fetching response:", error);
-        }
-    };
+  const queryLlama = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/query', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ prompt: inputText })
+      });
+      const data = await res.json();
+      setResponse(data.response);
+    } catch (error) {
+      console.error("Error fetching response:", error);
+    }
+  };
 
-    return (
-        <div className="p-4">
-            <textarea
-                className="border p-2 w-full"
-                rows="4"
-                placeholder="Enter your query..."
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-            />
-            <button className="bg-blue-500 text-white p-2 mt-2" onClick={queryLlama}>
-                Ask Llama
-            </button>
-            {response && (
-                <div className="mt-4 p-2 border">
-                    <strong>Response:</strong>
-                    <p>{response}</p>
-                </div>
-            )}
-        </div>
-    );
+  return (
+    <div className="min-h-screen bg-black py-12">
+      <div className="container mx-auto px-8">
+        <h1 className="text-3xl font-semibold mb-6" style={{ color: '#CFB991' }}>
+          Job Matching 💼
+        </h1>
+
+        <textarea
+          className="w-full border rounded p-2"
+          rows="4"
+          placeholder="Enter your query..."
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          style={{
+            backgroundColor: '#6F6F6F',
+            color: '#EDE0SF',
+            borderColor: '#CFB991',
+          }}
+        />
+
+        <button
+          className="mt-2 font-bold py-2 px-4 rounded"
+          onClick={queryLlama}
+          style={{
+            backgroundColor: '#CFB991',
+            color: '#000000',
+          }}
+        >
+          Ask Llama
+        </button>
+
+        {response && (
+          <div
+            className="mt-4 p-4 rounded border"
+            style={{
+              backgroundColor: '#6F6F6F',
+              borderColor: '#CFB991',
+              color: '#EDE0SF',
+            }}
+          >
+            <strong style={{ color: '#CDB98F' }}>Response:</strong>
+            <p className="mt-2">{response}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default JobMatchingPage;
