@@ -26,7 +26,7 @@ Alignify is an **AI-driven resume reviewer** designed to help job seekers optimi
 ### **Installation**
 1. **Clone the Repository**  
    ```sh
-   git clone https://github.com/aaryanwadhwani/Hacathon-Boiler-KWA.git
+   git clone https://github.com/aryamansh30/Alignify.git
    cd Hacathon-Boiler-KWA
    ```
 
