@@ -30,7 +30,7 @@ const AnalysisSchema = new mongoose.Schema({
   jobDescription: { type: String, required: true },
   atsScore: { type: Number },
   missingKeywords: { type: [String] },
-  suggestions: { type: String },
+  suggestions: { type: [String] },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -70,18 +70,18 @@ app.post('/chat', upload.single('resumeFile'), async (req, res) => {
       resumeText = resumeFile.buffer.toString('utf-8');
     }
 
-    const prompt = `Please analyze the following resume for ATS compatibility in the context of the provided job description.
+    const prompt = `I want you to act as an expert talent acquisition recruiter for a top multinational company. Analyze the following resume in the context of the given job description. Identify specific keywords, skills, or concepts that are missing or underrepresented in the resume and that are critical for passing ATS screening. For each identified gap, provide targeted suggestions for modifying specific lines or sections of the resume rather than just giving generic advice.
+
+    Return your analysis as a JSON object with the following keys:
+    - atsScore: a number between 0 and 100 representing the ATS compatibility score.
+    - missingKeywords: a flat array of strings. Each string should be a single keyword or short phrase that is missing from the resume. If no keywords are missing, return an array with a string that states "No keywords missing."
+    - suggestions: an array of strings. Each string should be a detailed suggestion for improvement in bullet point format. Ensure each suggestion specifies exactly which line or section to modify (for example, "Edit the second bullet under 'TAMRON Experience' to include the phrase 'quant analysis'") and what to add or change. Provide as many specific suggestions as possible.
     
-Resume:
-${resumeText}
+    Resume:
+    ${resumeText}
     
-Job Description:
-${jobDescription}
-    
-Return the analysis as a JSON object with the following keys:
-- atsScore: ATS compatibility score (0-100)
-- missingKeywords: an array of keywords missing from the resume that are important for the job
-- suggestions: textual suggestions for improvement.`;
+    Job Description:
+    ${jobDescription}`;
 
     const response = await axios.post(
       "https://api.openai.com/v1/chat/completions",
